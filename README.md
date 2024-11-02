@@ -40,7 +40,7 @@ If you cannot or prefer not to use setup.sh, you can follow these manual steps:
 Activate the Python virtual environment: source venv/bin/activate
 This ensures that you are using the isolated environment created by setup.sh.
 
-Run the Flask server: python app.py
+Run the Flask server: python3 app.py
 The Flask server will run on http://localhost:5000. This means your computer is now acting as a server, waiting for requests.
 
 2. Frontend Setup (React)

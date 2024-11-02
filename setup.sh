@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash - Script for setting up the project environment
 
 # Ensure the script is executable with: chmod +x setup.sh
 # Run the script with: ./setup.sh
