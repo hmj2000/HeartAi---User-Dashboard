@@ -1,32 +1,29 @@
-# app_frontend.py - Streamlit frontend code
 import streamlit as st
 import requests
+import os
 
-# Set up the title and header
+# Relative path for uploads folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 st.title("Heart Sound Analysis App")
 st.header("Upload Your Heart Sound Recording for Analysis")
 
-# File uploader component
 uploaded_file = st.file_uploader("Choose a WAV file", type=["wav"])
 
-# Button for file upload and analysis
 if uploaded_file is not None:
-    # Display file upload confirmation
-    st.write(f"File '{uploaded_file.name}' uploaded successfully.")
+    with open(os.path.join(UPLOAD_FOLDER, uploaded_file.name), "wb") as f:
+        f.write(uploaded_file.getbuffer())
     
-    # Send the uploaded file to the backend
-    files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-    try:
-        response = requests.post("http://localhost:5000/upload", files=files)
+    st.write(f"File '{uploaded_file.name}' uploaded successfully.")
 
-        if response.status_code == 200:
-            result = response.json().get("result")
-            st.success(f"Analysis Result: {result}")
-        else:
-            error_message = response.json().get("error", "An unknown error occurred.")
-            st.error(f"Error: {error_message}")
-    except Exception as e:
-        st.error(f"Error connecting to the backend: {str(e)}")
+    response = requests.post("http://localhost:5000/upload", files={'file': uploaded_file})
 
-# Optional: add further explanation or insights for users
-st.write("Note: This tool analyzes heart sound recordings and classifies them as 'Normal' or 'Abnormal'.")
+    if response.status_code == 200:
+        result = response.json()
+        st.write(f"Prediction: {result.get('prediction', 'Result unavailable')}")
+        if 'spectrogram_image' in result:
+            st.image(result['spectrogram_image'])
+    else:
+        st.write(f"Error: {response.json().get('error')}")

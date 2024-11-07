@@ -1,31 +1,32 @@
-# Import necessary libraries
 import os
+import numpy as np
 import librosa
 import librosa.display
-import numpy as np  # Make sure this is imported
 import matplotlib.pyplot as plt
 
-# Define input and output directories
-input_dir = '/home/hamza/Documents/HeartAi/train'  # Path to the training set folder
-output_dir = '/home/hamza/Documents/HeartAi/spectrograms'  # Path to save spectrograms
-os.makedirs(output_dir, exist_ok=True)
+BASE_DIR = '/content/HeartSoundAnalysis'
+SOURCE_DIR = os.path.join(BASE_DIR, 'dataset')
+DEST_DIR = os.path.join(BASE_DIR, 'spectrograms')
+os.makedirs(DEST_DIR, exist_ok=True)
 
-# Generate spectrograms for all audio files in the input directory
-for file_name in os.listdir(input_dir):
-    if file_name.endswith('.wav'):
-        file_path = os.path.join(input_dir, file_name)
-        y, sr = librosa.load(file_path, sr=None)
-        spectrogram = librosa.feature.melspectrogram(y=y, sr=sr)
-        spectrogram_db = librosa.power_to_db(spectrogram, ref=np.max)
+def generate_spectrograms():
+    for file in os.listdir(SOURCE_DIR):
+        if file.endswith('.wav'):
+            audio_path = os.path.join(SOURCE_DIR, file)
+            
+            # Load the audio file
+            y, sr = librosa.load(audio_path, sr=None)
+            
+            # Generate the Mel spectrogram
+            spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+            spectrogram_db = librosa.power_to_db(spectrogram, ref=np.max)
+            
+            # Plot the spectrogram and save as a .png file
+            plt.figure(figsize=(5, 5))
+            librosa.display.specshow(spectrogram_db, sr=sr, hop_length=512, x_axis='time', y_axis='mel')
+            plt.axis('off')  # Hide axes for a cleaner image
+            save_path = os.path.join(DEST_DIR, file.replace('.wav', '.png'))
+            plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+            plt.close()
 
-        # Plot and save the spectrogram as an image
-        plt.figure(figsize=(10, 4))
-        librosa.display.specshow(spectrogram_db, sr=sr, x_axis='time', y_axis='mel')
-        plt.colorbar(format='%+2.0f dB')
-        plt.title(f'Spectrogram of {file_name}')
-        plt.tight_layout()
-        output_file_path = os.path.join(output_dir, f'{file_name}.png')
-        plt.savefig(output_file_path)
-        plt.close()
-
-print("Spectrogram generation complete.")
+generate_spectrograms()
