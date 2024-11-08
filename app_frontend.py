@@ -13,17 +13,26 @@ st.header("Upload Your Heart Sound Recording for Analysis")
 uploaded_file = st.file_uploader("Choose a WAV file", type=["wav"])
 
 if uploaded_file is not None:
-    with open(os.path.join(UPLOAD_FOLDER, uploaded_file.name), "wb") as f:
+    # Save uploaded file to a temporary location
+    file_path = os.path.join(UPLOAD_FOLDER, uploaded_file.name)
+    with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-    
+
     st.write(f"File '{uploaded_file.name}' uploaded successfully.")
 
-    response = requests.post("http://localhost:5000/upload", files={'file': uploaded_file})
+    backend_url = os.getenv("BACKEND_URL")
+    if backend_url:
+        # Open the file in binary mode to send in the request
+        with open(file_path, "rb") as file:
+            response = requests.post(f"{backend_url}/upload", files={'file': file})
 
-    if response.status_code == 200:
-        result = response.json()
-        st.write(f"Prediction: {result.get('prediction', 'Result unavailable')}")
-        if 'spectrogram_image' in result:
-            st.image(result['spectrogram_image'])
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                st.write(f"Success: {data}")
+            except ValueError:
+                st.write("Error: The server did not return JSON data.")
+        else:
+            st.write(f"Error: {response.status_code} - {response.text}")
     else:
-        st.write(f"Error: {response.json().get('error')}")
+        st.write("Error: BACKEND_URL environment variable not set.")
