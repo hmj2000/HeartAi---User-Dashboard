@@ -1,40 +1,50 @@
 import streamlit as st
 import requests
+from PIL import Image
+import io
 import os
 
-# Define the URL of the Flask backend hosted on Replit
+# Set the URL for the Flask backend
 backend_url = "https://516299ad-8520-43fc-8c68-ea6726ba6def-00-22s50ndij9nvh.spock.replit.dev"
 
-# Create a folder to store uploaded files
+# Set up the uploads folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Streamlit UI
 st.title("Heart Sound Analysis App")
 st.header("Upload Your Heart Sound Recording for Analysis")
 
-# File uploader widget
 uploaded_file = st.file_uploader("Choose a WAV file", type=["wav"])
 
 if uploaded_file is not None:
-    # Save the uploaded file locally in the uploads folder
+    # Save the uploaded file locally
     file_path = os.path.join(UPLOAD_FOLDER, uploaded_file.name)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
     st.write(f"File '{uploaded_file.name}' uploaded successfully.")
 
-    # Send the file to the Flask backend
+    # Test the connection to the backend by sending the uploaded file
     if backend_url:
         with open(file_path, "rb") as file:
             response = requests.post(f"{backend_url}/upload", files={'file': file})
 
-        # Process the backend response
+        # Check the backend's response
         if response.status_code == 200:
             try:
                 data = response.json()
-                st.write("Analysis Result:", data)
+                st.write("Analysis Result:", data["prediction"])
+                
+                # Display the analyzed spectrogram image
+                image_url = f"{backend_url}/download/{uploaded_file.name.replace('.wav', '_analyzed.png')}"
+                image_response = requests.get(image_url)
+                
+                if image_response.status_code == 200:
+                    image = Image.open(io.BytesIO(image_response.content))
+                    st.image(image, caption="Analyzed Spectrogram")
+                else:
+                    st.write("Error: Could not retrieve the analyzed spectrogram image.")
             except ValueError:
                 st.write("Error: The server did not return JSON data.")
         else:
