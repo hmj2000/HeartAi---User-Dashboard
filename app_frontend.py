@@ -25,7 +25,7 @@ if uploaded_file is not None:
 
     st.write(f"File '{uploaded_file.name}' uploaded successfully.")
 
-    # Test the connection to the backend by sending the uploaded file
+    # Send the file to the Flask backend
     if backend_url:
         with open(file_path, "rb") as file:
             response = requests.post(f"{backend_url}/upload", files={'file': file})
@@ -33,14 +33,16 @@ if uploaded_file is not None:
         # Check the backend's response
         if response.status_code == 200:
             try:
+                # Parse JSON response from the backend
                 data = response.json()
-                st.write("Analysis Result:", data["prediction"])
-                
+                st.write("Analysis Result:", data.get("prediction", "Unknown"))
+
                 # Display the analyzed spectrogram image
                 image_url = f"{backend_url}/download/{uploaded_file.name.replace('.wav', '_analyzed.png')}"
                 image_response = requests.get(image_url)
                 
                 if image_response.status_code == 200:
+                    # Display image in Streamlit
                     image = Image.open(io.BytesIO(image_response.content))
                     st.image(image, caption="Analyzed Spectrogram")
                 else:
