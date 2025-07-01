@@ -5,7 +5,7 @@ import io
 import os
 
 # Set the URL for the Flask backend
-backend_url = "https://516299ad-8520-43fc-8c68-ea6726ba6def-00-22s50ndij9nvh.spock.replit.dev"
+backend_url = "https://heartai-backend-production.up.railway.app"
 
 # Set up the uploads folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
