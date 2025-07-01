@@ -1,0 +1,9 @@
+flask
+streamlit
+librosa
+matplotlib
+numpy
+flask-cors
+requests
+tensorflow
+pillow
