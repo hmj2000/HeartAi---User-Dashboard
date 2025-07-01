@@ -10,8 +10,15 @@ backend_url = "https://516299ad-8520-43fc-8c68-ea6726ba6def-00-22s50ndij9nvh.spo
 # Set up the uploads folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Ensure Uploads Folder Exists Safely
+if os.path.exists(UPLOAD_FOLDER):
+    if not os.path.isdir(UPLOAD_FOLDER):
+        raise Exception(f"A file named 'uploads' exists. Please delete or rename it.")
+else:
+    os.makedirs(UPLOAD_FOLDER)
+
+# UI Layout
 st.title("Heart Sound Analysis App")
 st.header("Upload Your Heart Sound Recording for Analysis")
 
@@ -24,32 +31,34 @@ if uploaded_file is not None:
         f.write(uploaded_file.getbuffer())
 
     st.write(f"File '{uploaded_file.name}' uploaded successfully.")
+    st.audio(uploaded_file, format="audio/wav")
 
     # Send the file to the Flask backend
     if backend_url:
-        with open(file_path, "rb") as file:
-            response = requests.post(f"{backend_url}/upload", files={'file': file})
-
-        # Check the backend's response
-        if response.status_code == 200:
+        with st.spinner("Analyzing heart sound..."):
             try:
-                # Parse JSON response from the backend
-                data = response.json()
-                st.write("Analysis Result:", data.get("prediction", "Unknown"))
+                with open(file_path, "rb") as file:
+                    response = requests.post(f"{backend_url}/upload", files={'file': file})
 
-                # Display the analyzed spectrogram image
-                image_url = f"{backend_url}/download/{uploaded_file.name.replace('.wav', '_analyzed.png')}"
-                image_response = requests.get(image_url)
-                
-                if image_response.status_code == 200:
-                    # Display image in Streamlit
-                    image = Image.open(io.BytesIO(image_response.content))
-                    st.image(image, caption="Analyzed Spectrogram")
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        st.write("Analysis Result:", data.get("prediction", "Unknown"))
+
+                        # Display the analyzed spectrogram image
+                        image_url = f"{backend_url}/download/{uploaded_file.name.replace('.wav', '_analyzed.png')}"
+                        image_response = requests.get(image_url)
+
+                        if image_response.status_code == 200:
+                            image = Image.open(io.BytesIO(image_response.content))
+                            st.image(image, caption="Analyzed Spectrogram")
+                        else:
+                            st.write("Error: Could not retrieve the analyzed spectrogram image.")
+                    except ValueError:
+                        st.write("Error: The server did not return valid JSON.")
                 else:
-                    st.write("Error: Could not retrieve the analyzed spectrogram image.")
-            except ValueError:
-                st.write("Error: The server did not return JSON data.")
-        else:
-            st.write(f"Error: {response.status_code} - {response.text}")
+                    st.write(f"Error: {response.status_code} - {response.text}")
+            except requests.exceptions.RequestException as e:
+                st.write(f"Error connecting to backend: {e}")
     else:
         st.write("Error: BACKEND_URL is not set.")
