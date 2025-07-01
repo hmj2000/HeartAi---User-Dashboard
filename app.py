@@ -16,8 +16,25 @@ CORS(app)  # Enable CORS for all routes to allow cross-origin requests from Stre
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 ANALYZED_FOLDER = os.path.join(BASE_DIR, 'analyzed_spectrograms')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(ANALYZED_FOLDER, exist_ok=True)
+#os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+#os.makedirs(ANALYZED_FOLDER, exist_ok=True)
+
+# --- Ensure Uploads Folder Exists Safely ---
+if os.path.exists(UPLOAD_FOLDER):
+    if not os.path.isdir(UPLOAD_FOLDER):
+        raise Exception(f"A file named 'uploads' exists. Please delete or rename it.")
+else:
+    os.makedirs(UPLOAD_FOLDER)
+
+# --- Ensure Analyzed Spectrograms Folder Exists Safely ---
+if os.path.exists(ANALYZED_FOLDER):
+    if not os.path.isdir(ANALYZED_FOLDER):
+        raise Exception(
+            f"A file named 'analyzed_spectrograms' exists. Please delete or rename it."
+        )
+else:
+    os.makedirs(ANALYZED_FOLDER)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/', methods=['GET'])
